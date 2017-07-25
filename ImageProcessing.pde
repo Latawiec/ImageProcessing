@@ -22,9 +22,9 @@ void draw()
      float[][] edgeDetection8 = {{-1f,-1f,-1f},{-1f,8f,-1f},{-1f,-1f,-1f}};
      float[][] edgeDetection1 = {{0f,1f,0f},{1f,-4f,1f},{0f,1f,0f}};
      float[][] edgeDetection0 = {{1f,0f,-1f},{0f,0f,0f},{-1f,0f,1f}}; 
-     image(Convolution(source, edgeDetection8), 0, 0);
-     image(Convolution(source, edgeDetection1), source.width, 0);
-     image(Convolution(source, edgeDetection0), 2*source.width, 0);
+     image(MinimizedAverageErrorDither(Convolution(source, edgeDetection8), 1), 0, 0);
+     image(MinimizedAverageErrorDither(Convolution(source, edgeDetection1), 1), source.width, 0);
+     image(MinimizedAverageErrorDither(Convolution(source, edgeDetection0), 1), 2*source.width, 0);
      //image(OrderedDither(NearestNeighbour(BasicGrayscale(source), 1), 1), 0, 0);
      //image(FloydSteinbergDither(NearestNeighbour(BasicGrayscale(source), 1), 1), source.width, 0);
      //image(MinimizedAverageErrorDither(NearestNeighbour(BasicGrayscale(source), 1), 1), 2*source.width, 0);
@@ -119,6 +119,10 @@ class MyColor
   
   public float red = 0, green = 0, blue = 0;
   
+  public float[] toMatrix()
+  {
+    return new float[]{this.red, this.green, this.blue};
+  }
   public color toInt()
   {
     return color(red, green, blue);
@@ -265,4 +269,15 @@ PImage BasicGrayscale(final PImage source)
  }
   
   return result;
+}
+
+float EuclideanDeistance(final float[] a, final float [] b)
+{
+  assert(a.length == b.length);
+  float sum = 0;
+  for(int i=0; i<a.length; i++)
+  {
+    sum += pow(a[i]-b[i], 2);
+  }
+  return sqrt(sum);
 }
