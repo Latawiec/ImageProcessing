@@ -6,7 +6,7 @@ void setup()
 void draw()
 {
   /*PImage source;
-  source = MinimizedAverageErrorDither(NearestNeighbour(BasicGrayscale(loadImage("https://scontent-waw1-1.xx.fbcdn.net/v/t34.0-12/20271916_1585200144855083_1436735162_n.jpg?oh=801acc5bbfddae91c4b49bcebfba57de&oe=5973309A", "jpg")), 1), 1);
+  source = MinimizedAverageErrorDither(NearestNeighbour(BasicGrayscale(loadImage("http://www.ece.rice.edu/~wakin/images/lena512.bmp", "bmp")), 1), 1);
   println(source.pixels.length);
   image(source,0,0);
   //image(NearestNeighbour(OrderedDither(loadImage("http://www.ece.rice.edu/~wakin/images/lena512.bmp", "bmp"), 1), 1), 0, 0);
@@ -16,10 +16,18 @@ void draw()
        println("IMAGE SAVED");
      }
    }*/
-   PImage source = loadImage("https://scontent-waw1-1.xx.fbcdn.net/v/t34.0-12/20271916_1585200144855083_1436735162_n.jpg?oh=801acc5bbfddae91c4b49bcebfba57de&oe=5973309A", "jpg");
-     image(OrderedDither(NearestNeighbour(BasicGrayscale(source), 1f/2), 1), 0, 0);
-     image(FloydSteinbergDither(NearestNeighbour(BasicGrayscale(source), 1f/2), 1), source.width, 0);
-     image(MinimizedAverageErrorDither(NearestNeighbour(BasicGrayscale(source), 1f/2), 1), 2*source.width, 0);
+   PImage source = loadImage("http://www.ece.rice.edu/~wakin/images/lena512.bmp", "bmp");
+     float[][] blur9= {{1f/9f,1f/9f,1f/9f},{1f/9f,1f/9f,1f/9f},{1f/9f,1f/9f,1f/9f}};
+     float[][] identity= {{0f,0f,0f},{0f,1f,0f},{0f,0f,0f}};
+     float[][] edgeDetection8 = {{-1f,-1f,-1f},{-1f,8f,-1f},{-1f,-1f,-1f}};
+     float[][] edgeDetection1 = {{0f,1f,0f},{1f,-4f,1f},{0f,1f,0f}};
+     float[][] edgeDetection0 = {{1f,0f,-1f},{0f,0f,0f},{-1f,0f,1f}}; 
+     image(Convolution(source, edgeDetection8), 0, 0);
+     image(Convolution(source, edgeDetection1), source.width, 0);
+     image(Convolution(source, edgeDetection0), 2*source.width, 0);
+     //image(OrderedDither(NearestNeighbour(BasicGrayscale(source), 1), 1), 0, 0);
+     //image(FloydSteinbergDither(NearestNeighbour(BasicGrayscale(source), 1), 1), source.width, 0);
+     //image(MinimizedAverageErrorDither(NearestNeighbour(BasicGrayscale(source), 1), 1), 2*source.width, 0);
    if(keyPressed){
      if(key==ENTER){
        saveFrame("source.png");
@@ -201,7 +209,7 @@ PImage ErrorDiffusionDither(final PImage source, int targetPaletteSize, final fl
   result.updatePixels();
   return result;
 }
-PImage FloydSteinbergDither(final PImage source, int targetPaletteSize)
+PImage FloydSteinbergDither(final PImage source, final int targetPaletteSize)
 {
   return ErrorDiffusionDither(source, targetPaletteSize, ErrorDiffusionDitherMatrices.FloydSteinbergMatrix);
 }
@@ -214,6 +222,31 @@ PImage SimpleErrorDiffustionDither(final PImage source, int targetPaletteSize)
 PImage MinimizedAverageErrorDither(final PImage source, int targetPaletteSize)
 {
   return ErrorDiffusionDither(source, targetPaletteSize, ErrorDiffusionDitherMatrices.MinimizedAverageErrorMatrix);
+}
+
+PImage Convolution(final PImage source, final float[][] kernel)
+{
+  PImage result = createImage(source.width-kernel.length/2, source.height-kernel[0].length/2, RGB);
+  //This only implements algorithm for corping Image to prevent needed pixels (for now)
+  
+  for(int i=kernel.length/2; i< source.height - kernel.length/2; i++)
+  {
+    for(int j=kernel[0].length/2; j<source.width - kernel[0].length/2; j++)
+    {
+      MyColor temp = new MyColor(0, 0, 0);
+      
+      for(int kernel_height=0; kernel_height<kernel.length; kernel_height++)
+      {
+        for(int kernel_width=0; kernel_width<kernel[0].length; kernel_width++)
+        {
+          temp.add(new MyColor(source.pixels[(i-(kernel.length/2)+kernel_height)*source.width+j-(kernel[0].length/2)+kernel_width]).multiply(kernel[kernel_height][kernel_width]));
+        } 
+      }
+      result.pixels[i*result.width+j] = temp.toInt();
+    }
+  }
+  result.updatePixels();
+  return result;
 }
 
 PImage BasicGrayscale(final PImage source)
